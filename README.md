@@ -335,6 +335,49 @@ See the `docs/` folder for architecture details and coding conventions.
 
 ---
 
+## 🖼️ Output Gallery
+
+### BER & Modulation
+![BER Modulation Comparison](reports/ber_modulation_comparison.png)
+*Fig 1: BER vs SNR for BPSK, QPSK, 16QAM, 64QAM over AWGN*
+
+![BER Channel Comparison](reports/ber_channel_comparison.png)
+*Fig 2: BER comparison across AWGN, Rayleigh, and Rician channels (QPSK)*
+
+### Constellation Diagrams
+![QPSK Constellation](reports/constellation_QPSK.png)
+*Fig 3: QPSK constellation diagram*
+
+![16QAM Constellation](reports/constellation_16QAM.png)
+*Fig 4: 16QAM constellation diagram*
+
+### OFDM & Equalization
+![OFDM Equalizer Comparison](reports/ofdm_equalizer_comparison.png)
+*Fig 5: OFDM equalization performance (None vs ZF vs MMSE)*
+
+![OFDM Spectrum](reports/ofdm_spectrum.png)
+*Fig 6: OFDM transmit spectrum*
+
+### Channel Estimation
+![Channel Estimation](reports/channel_estimation.png)
+*Fig 7: Pilot-based channel estimation (LS vs Linear vs MMSE)*
+
+### Adaptive Modulation
+![AMC Selection](reports/amc_selection.png)
+*Fig 8: Adaptive Modulation & Coding — scheme selection by SNR*
+
+### Beamforming
+![Beam Pattern](reports/beam_pattern.png)
+*Fig 9: 8-element ULA beam pattern steered to 0°*
+
+### MU-MIMO
+![MU-MIMO Sum Rate](reports/mumimo_sumrate.png)
+*Fig 10: MU-MIMO precoding comparison (ZF vs MMSE vs BD)*
+
+### HARQ
+![HARQ Performance](reports/harq_performance.png)
+*Fig 11: HARQ Chase combining BER improvement over retransmissions*
+
 ## 📜 License
 
 MIT © Sohan
