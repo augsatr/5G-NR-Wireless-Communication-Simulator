@@ -135,6 +135,38 @@ The modular architecture makes it easy to add:
 - Beamforming
 - MAC-layer scheduling
 
+## Output Gallery
+
+![BER Modulation Comparison](reports/ber_modulation_comparison.png)
+*Fig 1: BER vs SNR for BPSK, QPSK, 16QAM, 64QAM over AWGN*
+
+![BER Channel Comparison](reports/ber_channel_comparison.png)
+*Fig 2: BER comparison across AWGN, Rayleigh, and Rician channels (QPSK)*
+
+![Constellation QPSK](reports/constellation_QPSK.png)
+*Fig 3: QPSK constellation diagram*
+
+![OFDM Equalizer Comparison](reports/ofdm_equalizer_comparison.png)
+*Fig 4: OFDM equalization performance (None vs ZF vs MMSE)*
+
+![OFDM Spectrum](reports/ofdm_spectrum.png)
+*Fig 5: OFDM transmit spectrum*
+
+![Channel Estimation](reports/channel_estimation.png)
+*Fig 6: Pilot-based channel estimation (LS vs Linear vs MMSE)*
+
+![AMC Selection](reports/amc_selection.png)
+*Fig 7: Adaptive Modulation & Coding - scheme selection by SNR*
+
+![Beam Pattern](reports/beam_pattern.png)
+*Fig 8: 8-element ULA beam pattern*
+
+![MU-MIMO Sum Rate](reports/mumimo_sumrate.png)
+*Fig 9: MU-MIMO precoding comparison (ZF vs MMSE vs BD)*
+
+![HARQ Performance](reports/harq_performance.png)
+*Fig 10: HARQ Chase combining BER improvement*
+
 ## License
 
-MIT
+MIT © Sohan
