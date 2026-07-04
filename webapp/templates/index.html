@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5G-NR Wireless Simulator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #0a0e1a; color: #e0e6ff; font-family: 'Segoe UI', system-ui; }
+        .navbar { background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%) !important; box-shadow: 0 2px 20px rgba(13,110,253,0.3); }
+        .card { background: #131a2e; border: 1px solid #1e2a4a; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .card-header { background: rgba(13,110,253,0.12); border-bottom: 1px solid #1e2a4a; font-weight: 600; border-radius: 16px 16px 0 0 !important; }
+        .btn-primary { background: linear-gradient(135deg, #0d6efd, #6610f2); border: none; }
+        .btn-primary:hover { background: linear-gradient(135deg, #0b5ed7, #5a0ddb); transform: translateY(-1px); box-shadow: 0 4px 15px rgba(13,110,253,0.4); }
+        .form-control, .form-select { background: #0d1528; border: 1px solid #1e2a4a; color: #e0e6ff; }
+        .form-control:focus, .form-select:focus { background: #0d1528; color: #e0e6ff; border-color: #0d6efd; box-shadow: 0 0 0 2px rgba(13,110,253,0.2); }
+        .spinner { width: 40px; height: 40px; border: 4px solid #1e2a4a; border-top: 4px solid #0d6efd; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .result-img { width: 100%; border-radius: 12px; border: 1px solid #1e2a4a; }
+        .badge-snr { background: #0d6efd20; color: #6ea8fe; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; }
+        table { color: #e0e6ff !important; }
+        .ldpc-good { color: #20c997; }
+        .ldpc-bad { color: #dc3545; }
+        footer { border-top: 1px solid #1e2a4a; color: #6c757d; font-size: 0.85rem; }
+        .stats-card { text-align: center; padding: 15px; background: rgba(13,110,253,0.06); border-radius: 12px; border: 1px solid #1e2a4a; }
+        .nav-pills .nav-link { color: #e0e6ff; }
+        .nav-pills .nav-link.active { background: #0d6efd; }
+        @media (max-width: 768px) { .card-body { padding: 1rem; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark px-3">
+        <a class="navbar-brand fw-bold fs-4" href="#">📡 5G-NR Simulator</a>
+        <span class="text-white-50 ms-2 d-none d-md-inline">| Modular PHY Layer Simulation Framework</span>
+    </nav>
+
+    <div class="container-fluid px-4 py-4">
+        <ul class="nav nav-pills mb-4" id="tabNav">
+            <li class="nav-item"><button class="nav-link active" data-tab="ber">BER Curves</button></li>
+            <li class="nav-item"><button class="nav-link" data-tab="constellation">Constellation</button></li>
+            <li class="nav-item"><button class="nav-link" data-tab="ofdm">OFDM Spectrum</button></li>
+            <li class="nav-item"><button class="nav-link" data-tab="mimo">MU-MIMO</button></li>
+            <li class="nav-item"><button class="nav-link" data-tab="beamforming">Beamforming</button></li>
+            <li class="nav-item"><button class="nav-link" data-tab="analysis">Full Analysis</button></li>
+            <li class="nav-item"><button class="nav-link" data-tab="ldpc">LDPC Coding</button></li>
+            <li class="nav-item"><button class="nav-link" data-tab="numerology">Numerology</button></li>
+        </ul>
+
+        <div id="tab-content">
+            <!-- Default: BER tab -->
+        </div>
+    </div>
+
+    <footer class="text-center py-3 mt-4">
+        5G-NR Wireless Communication Simulator &mdash; Python + NumPy + Flask
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API = "/api";
+        let currentTab = "ber";
+
+        document.querySelectorAll("[data-tab]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll("[data-tab]").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentTab = btn.dataset.tab;
+                loadTab(currentTab);
+            });
+        });
+
+        function spinner() {
+            return `<div class="text-center py-5"><div class="spinner"></div><p class="mt-2 text-secondary">Processing...</p></div>`;
+        }
+
+        function loadTab(tab) {
+            const container = document.getElementById("tab-content");
+            if (tab === "ber") {
+                container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card"><div class="card-header">⚙️ Parameters</div><div class="card-body">
+                            <label class="form-label">Modulation</label>
+                            <select class="form-select mb-2" id="ber-mod">
+                                <option>BPSK</option><option selected>QPSK</option><option>16QAM</option><option>64QAM</option>
+                            </select>
+                            <label class="form-label">Channel</label>
+                            <select class="form-select mb-2" id="ber-ch">
+                                <option>AWGN</option><option>Rayleigh</option><option>Rician</option>
+                            </select>
+                            <label class="form-label">SNR Range (dB)</label>
+                            <div class="row g-2 mb-2">
+                                <div class="col-4"><input class="form-control" id="ber-start" value="0" placeholder="Start"></div>
+                                <div class="col-4"><input class="form-control" id="ber-end" value="25" placeholder="End"></div>
+                                <div class="col-4"><input class="form-control" id="ber-step" value="2" placeholder="Step"></div>
+                            </div>
+                            <label class="form-label">Bits</label>
+                            <input class="form-control mb-3" id="ber-bits" value="50000">
+                            <button class="btn btn-primary w-100" onclick="runBER()">▶ Simulate</button>
+                        </div></div>
+                        <div class="card mt-3"><div class="card-header">📊 Quick Stats</div><div class="card-body" id="ber-stats">
+                            <p class="text-secondary mb-0">Run simulation to see stats</p>
+                        </div></div>
+                    </div>
+                    <div class="col-md-8"><div class="card"><div class="card-header">📈 BER vs SNR</div><div class="card-body text-center" id="ber-result">${spinner()}</div></div></div>
+                </div>`;
+                runBER();
+            } else if (tab === "constellation") {
+                container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card"><div class="card-header">⚙️ Parameters</div><div class="card-body">
+                            <label class="form-label">Modulation</label>
+                            <select class="form-select mb-2" id="const-mod">
+                                <option>BPSK</option><option selected>QPSK</option><option>16QAM</option><option>64QAM</option>
+                            </select>
+                            <label class="form-label">SNR (dB)</label>
+                            <input class="form-control mb-3" id="const-snr" value="15" type="number">
+                            <button class="btn btn-primary w-100" onclick="runConstellation()">▶ Generate</button>
+                        </div></div>
+                    </div>
+                    <div class="col-md-9"><div class="card"><div class="card-header">🎯 Constellation Diagram</div><div class="card-body text-center" id="const-result">${spinner()}</div></div></div>
+                </div>`;
+                runConstellation();
+            } else if (tab === "ofdm") {
+                container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-12"><div class="card"><div class="card-header">📶 OFDM Spectrum</div><div class="card-body text-center" id="ofdm-result">${spinner()}</div></div></div>
+                </div>`;
+                runOFDM();
+            } else if (tab === "mimo") {
+                container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card"><div class="card-header">⚙️ MIMO Config</div><div class="card-body">
+                            <label class="form-label">TX Antennas</label>
+                            <input class="form-control mb-2" id="mimo-tx" value="8" type="number" min="2" max="64">
+                            <label class="form-label">Users</label>
+                            <input class="form-control mb-3" id="mimo-users" value="2" type="number" min="1" max="8">
+                            <button class="btn btn-primary w-100" onclick="runMIMO()">▶ Compute</button>
+                        </div></div>
+                    </div>
+                    <div class="col-md-9"><div class="card"><div class="card-header">📊 MU-MIMO Sum Rate</div><div class="card-body text-center" id="mimo-result">${spinner()}</div></div></div>
+                </div>`;
+                runMIMO();
+            } else if (tab === "beamforming") {
+                container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card"><div class="card-header">⚙️ Array Config</div><div class="card-body">
+                            <label class="form-label">Antennas</label>
+                            <input class="form-control mb-3" id="bf-ant" value="8" type="number" min="2" max="64">
+                            <button class="btn btn-primary w-100" onclick="runBeamforming()">▶ Generate</button>
+                        </div></div>
+                    </div>
+                    <div class="col-md-9"><div class="card"><div class="card-header">📡 Beam Pattern</div><div class="card-body text-center" id="bf-result">${spinner()}</div></div></div>
+                </div>`;
+                runBeamforming();
+            } else if (tab === "analysis") {
+                container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card"><div class="card-header">⚙️ Parameters</div><div class="card-body">
+                            <label class="form-label">Modulation</label>
+                            <select class="form-select mb-2" id="ana-mod">
+                                <option>BPSK</option><option selected>QPSK</option><option>16QAM</option><option>64QAM</option>
+                            </select>
+                            <label class="form-label">Channel</label>
+                            <select class="form-select mb-3" id="ana-ch">
+                                <option>AWGN</option><option>Rayleigh</option><option>Rician</option>
+                            </select>
+                            <button class="btn btn-primary w-100" onclick="runAnalysis()">▶ Analyze</button>
+                        </div></div>
+                    </div>
+                    <div class="col-md-9"><div class="card"><div class="card-header">📊 Full PHY Analysis</div><div class="card-body text-center" id="ana-result">${spinner()}</div></div></div>
+                </div>`;
+                runAnalysis();
+            } else if (tab === "ldpc") {
+                container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card"><div class="card-header">🔐 LDPC Coding Demo</div><div class="card-body">
+                            <p class="mb-3">Repeat-Accumulate (RA) code with min-sum BP decoding. n=128, rate=1/2.</p>
+                            <div id="ldpc-result" class="text-center">${spinner()}</div>
+                        </div></div>
+                    </div>
+                </div>`;
+                runLDPC();
+            } else if (tab === "numerology") {
+                container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card"><div class="card-header">⚙️ Numerology</div><div class="card-body">
+                            <label class="form-label">μ (Numerology)</label>
+                            <select class="form-select mb-3" id="num-mu">
+                                <option value="0">μ=0 (15 kHz) - Wide area</option>
+                                <option value="1">μ=1 (30 kHz) - Urban</option>
+                                <option value="2">μ=2 (60 kHz) - mmWave</option>
+                                <option value="3">μ=3 (120 kHz) - High mobility</option>
+                                <option value="4">μ=4 (240 kHz) - Specialized</option>
+                            </select>
+                            <button class="btn btn-primary w-100" onclick="runNumerology()">▶ Show</button>
+                        </div></div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card"><div class="card-header">📋 Frame Structure</div><div class="card-body" id="num-result">
+                            <pre class="mb-0" style="color:#e0e6ff;font-size:0.95rem;">Select a numerology and click Show.</pre>
+                        </div></div>
+                    </div>
+                </div>`;
+            }
+        }
+
+        async function runBER() {
+            const el = document.getElementById("ber-result");
+            el.innerHTML = spinner();
+            const resp = await fetch("/api/ber-curve", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    modulation: document.getElementById("ber-mod").value,
+                    channel: document.getElementById("ber-ch").value,
+                    snr_start: parseFloat(document.getElementById("ber-start").value),
+                    snr_end: parseFloat(document.getElementById("ber-end").value),
+                    snr_step: parseFloat(document.getElementById("ber-step").value),
+                    num_bits: parseInt(document.getElementById("ber-bits").value)
+                })
+            });
+            const data = await resp.json();
+            el.innerHTML = `<img src="data:image/png;base64,${data.image}" class="result-img">`;
+            const ber = data.ber;
+            const best = Math.min(...ber);
+            const lastSnr = data.snr[data.snr.length - 1];
+            document.getElementById("ber-stats").innerHTML = `
+                <div class="row g-2">
+                    <div class="col-6"><div class="stats-card"><small class="text-secondary">Best BER</small><br><strong>${best.toExponential(2)}</strong></div></div>
+                    <div class="col-6"><div class="stats-card"><small class="text-secondary">Max SNR</small><br><strong>${lastSnr} dB</strong></div></div>
+                </div>`;
+        }
+
+        async function runConstellation() {
+            const el = document.getElementById("const-result");
+            el.innerHTML = spinner();
+            const resp = await fetch("/api/constellation", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    modulation: document.getElementById("const-mod").value,
+                    snr: parseFloat(document.getElementById("const-snr").value)
+                })
+            });
+            const data = await resp.json();
+            el.innerHTML = `<img src="data:image/png;base64,${data.image}" class="result-img">`;
+        }
+
+        async function runOFDM() {
+            const el = document.getElementById("ofdm-result");
+            el.innerHTML = spinner();
+            const resp = await fetch("/api/ofdm-spectrum", {method:"POST"});
+            const data = await resp.json();
+            el.innerHTML = `<img src="data:image/png;base64,${data.image}" class="result-img">`;
+        }
+
+        async function runMIMO() {
+            const el = document.getElementById("mimo-result");
+            el.innerHTML = spinner();
+            const resp = await fetch("/api/mimo-sumrate", {
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body: JSON.stringify({
+                    n_tx: parseInt(document.getElementById("mimo-tx").value),
+                    n_users: parseInt(document.getElementById("mimo-users").value)
+                })
+            });
+            const data = await resp.json();
+            el.innerHTML = `<img src="data:image/png;base64,${data.image}" class="result-img">`;
+        }
+
+        async function runBeamforming() {
+            const el = document.getElementById("bf-result");
+            el.innerHTML = spinner();
+            const resp = await fetch("/api/beam-pattern", {
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body: JSON.stringify({n_antennas: parseInt(document.getElementById("bf-ant").value)})
+            });
+            const data = await resp.json();
+            el.innerHTML = `<img src="data:image/png;base64,${data.image}" class="result-img">`;
+        }
+
+        async function runAnalysis() {
+            const el = document.getElementById("ana-result");
+            el.innerHTML = spinner();
+            const resp = await fetch("/api/full-analysis", {
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body: JSON.stringify({
+                    modulation: document.getElementById("ana-mod").value,
+                    channel: document.getElementById("ana-ch").value
+                })
+            });
+            const data = await resp.json();
+            el.innerHTML = `<img src="data:image/png;base64,${data.image}" class="result-img">`;
+        }
+
+        async function runLDPC() {
+            const el = document.getElementById("ldpc-result");
+            el.innerHTML = spinner();
+            const resp = await fetch("/api/ldpc-demo", {method:"POST"});
+            const data = await resp.json();
+            let html = `<table class="table table-dark table-striped"><thead><tr>
+                <th>Errors In</th><th>BER Before</th><th>BER After</th><th>Improvement</th>
+            </tr></thead><tbody>`;
+            for (const r of data.results) {
+                const imp = r.ber_before > 0 ? (r.ber_before / Math.max(r.ber_after, 1e-10)).toFixed(2) : "∞";
+                const cls = r.ber_after < r.ber_before ? "ldpc-good" : "ldpc-bad";
+                const arrow = r.ber_after < r.ber_before ? "✅" : "❌";
+                html += `<tr>
+                    <td>${r.errors}</td>
+                    <td>${r.ber_before.toExponential(2)}</td>
+                    <td class="${cls}">${r.ber_after.toExponential(2)}</td>
+                    <td>${arrow} ${imp}× better</td>
+                </tr>`;
+            }
+            html += `</tbody></table><p class="text-muted mt-2">RA code (n=128, rate=1/2) - Min-sum BP decoder (50 iterations)</p>`;
+            el.innerHTML = html;
+        }
+
+        async function runNumerology() {
+            const el = document.getElementById("num-result");
+            const resp = await fetch("/api/numerology", {
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body: JSON.stringify({mu: parseInt(document.getElementById("num-mu").value)})
+            });
+            const data = await resp.json();
+            el.innerHTML = `<pre style="color:#e0e6ff;font-size:0.95rem;">${data.info}</pre>`;
+        }
+
+        // Load first tab on page load
+        loadTab("ber");
+    </script>
+</body>
+</html>
