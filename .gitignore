@@ -7,10 +7,6 @@ venv/
 *.egg-info/
 dist/
 build/
-reports/
-*.png
-*.jpg
-*.gif
 .DS_Store
 Thumbs.db
 *.log
