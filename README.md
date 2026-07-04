@@ -390,6 +390,41 @@ Project Link: [https://github.com/augsatr/5G-NR-Wireless-Communication-Simulator
 
 ---
 
+## 🧠 Skills Required
+
+### Prerequisites
+| Skill | Level | Why |
+|-------|-------|-----|
+| **Python** | Intermediate | Classes, NumPy, vectorization, OOP design |
+| **Digital Communications** | Intermediate | Modulation, AWGN, BER, SNR, pulse shaping |
+| **Probability & Statistics** | Intermediate | Random processes, Gaussian noise, Monte Carlo methods |
+| **Linear Algebra** | Intermediate | Matrix operations, complex numbers, eigenvalues |
+
+### Topics Learned Through This Project
+| Topic | What You'll Master |
+|-------|-------------------|
+| **Digital Modulation** | BPSK, QPSK, QAM constellations, Gray coding, symbol mapping |
+| **Wireless Channel Modeling** | AWGN, Rayleigh/Rician fading, Doppler effect, multipath |
+| **OFDM** | FFT/IFFT, cyclic prefix, subcarrier orthogonality, PAPR |
+| **MIMO Systems** | Spatial multiplexing, diversity, Alamouti STBC, precoding |
+| **Channel Coding** | Convolutional codes, LDPC, belief propagation, min-sum algorithm |
+| **Equalization** | Zero Forcing, MMSE, ML detection |
+| **5G NR Numerology** | Subcarrier spacing, slot formats, frame structure, resource grids |
+| **Channel Estimation** | Pilot design, LS/MMSE estimation, interpolation |
+| **Adaptive Modulation** | SNR-driven link adaptation, CQI feedback |
+| **Beamforming** | ULA steering vectors, beam patterns, DOA estimation |
+| **MU-MIMO** | Multi-user precoding, interference management, sum rate |
+| **HARQ** | Chase combining, incremental redundancy, retransmission protocols |
+| **Performance Analysis** | BER/SER curves, throughput, spectral efficiency, latency modeling |
+| **Visualization** | Matplotlib, publication-quality graphs, subplots |
+| **Software Engineering** | Modular architecture, OOP, MVC pattern, Flask web apps |
+| **Scientific Computing** | NumPy vectorization, Monte Carlo simulations, sparse matrices |
+
+### Tools You'll Use
+```
+Python • NumPy • SciPy • Matplotlib • Flask • Streamlit • Git • GitHub
+```
+
 ## 🙏 Acknowledgments
 
 - 3GPP TS 38.211 — NR Physical Channels and Modulation
